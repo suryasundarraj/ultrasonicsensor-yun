@@ -20,14 +20,14 @@ const char *g_sensor3 = "003";
 
 /*Characted String used to form the json data to be sent 
 to the app using json_data function */
-char g_jsonResponse[26] = "";
+char g_jsonResponse[100] = "";
 
 int g_uart0_filestream = -1;
 int g_firstChar = 0,g_secondChar = 0,g_thirdChar = 0;
 
 int pubnub_publishStatus(char *p_data);
 static void generate_uuid(pubnub_t *pbp);
-void prepare_json_data(const char *p_sensor,float p_status);
+void prepare_json_data(const char *p_sensor,int p_status,const char *p_sensor2,int p_status2,const char *p_sensor3,int p_status3);
 int uartInit(char *port);
 
 int uartInit(char *port)
@@ -109,15 +109,27 @@ int pubnub_publishStatus(char *p_data){
     return 0;
 }
 
-void prepare_json_data(const char *p_sensor,float p_status)
+void prepare_json_data(const char *p_sensor,int p_status,const char *p_sensor2,int p_status2,const char *p_sensor3,int p_status3)
 {
 	char l_buf [8] = "";
-	strcat(g_jsonResponse,"{\"device\":\"");
+	strcat(g_jsonResponse,"[{\"device1\":\"");
 	strcat(g_jsonResponse,p_sensor);
-	snprintf(l_buf,sizeof(l_buf),"%4.2f",p_status);
-	strcat(g_jsonResponse,"\",\"distance\":");
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status);
+	strcat(g_jsonResponse,"\",\"distance1\":");
 	strcat(g_jsonResponse,l_buf);
-	strcat(g_jsonResponse,"}");
+	strcat(g_jsonResponse,"},");
+	strcat(g_jsonResponse,"{\"device2\":\"");
+	strcat(g_jsonResponse,p_sensor2);
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status2);
+	strcat(g_jsonResponse,"\",\"distance2\":");
+	strcat(g_jsonResponse,l_buf);
+	strcat(g_jsonResponse,"},");
+	strcat(g_jsonResponse,"{\"device3\":\"");
+	strcat(g_jsonResponse,p_sensor3);
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status3);
+	strcat(g_jsonResponse,"\",\"distance3\":");
+	strcat(g_jsonResponse,l_buf);
+	strcat(g_jsonResponse,"}]");
 	memset(l_buf, 0, sizeof(l_buf));
 }
 
@@ -146,31 +158,23 @@ int main(int argc,char *argv[])
 					l_tok = find_json_token(l_arr, "device1");
 					sprintf(l_sensor1_str,"%.*s",l_tok->len,l_tok->ptr);
 					l_sensor1_value = atoi(l_sensor1_str);
-					if(((l_sensor1_value != l_sensor1_prevValue && (l_sensor1_value >= l_sensor1_prevValue+5)) || (l_sensor1_value <= l_sensor1_prevValue-5))){
-						l_sensor1_prevValue = l_sensor1_value;
-						prepare_json_data(g_sensor1,l_sensor1_value);
-						pubnub_publishStatus(g_jsonResponse);
-						memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
-				  }  						
 					l_tok = find_json_token(l_arr, "device2");
 					sprintf(l_sensor2_str,"%.*s",l_tok->len,l_tok->ptr);
 					l_sensor2_value = atoi(l_sensor2_str);
-					if(((l_sensor2_value != l_sensor2_prevValue && (l_sensor2_value >= l_sensor2_prevValue+5)) || (l_sensor2_value <= l_sensor2_prevValue-5))){
-						l_sensor2_prevValue = l_sensor2_value;
-						prepare_json_data(g_sensor2,l_sensor2_value);
-						pubnub_publishStatus(g_jsonResponse);
-						memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
-					}
 					l_tok = find_json_token(l_arr, "device3");
 					sprintf(l_sensor3_str,"%.*s",l_tok->len,l_tok->ptr);
 					l_sensor3_value = atoi(l_sensor3_str);
-					if(((l_sensor3_value != l_sensor3_prevValue && (l_sensor3_value >= l_sensor3_prevValue+5)) || (l_sensor3_value <= l_sensor3_prevValue-5))){
+					if(((l_sensor1_value != l_sensor1_prevValue && (l_sensor1_value >= l_sensor1_prevValue+5)) || (l_sensor1_value <= l_sensor1_prevValue-5))
+						|| ((l_sensor2_value != l_sensor2_prevValue && (l_sensor2_value >= l_sensor2_prevValue+5)) || (l_sensor2_value <= l_sensor2_prevValue-5))
+						|| ((l_sensor3_value != l_sensor3_prevValue && (l_sensor3_value >= l_sensor3_prevValue+5)) || (l_sensor3_value <= l_sensor3_prevValue-5))){
+						l_sensor1_prevValue = l_sensor1_value;
+						l_sensor2_prevValue = l_sensor2_value;
 						l_sensor3_prevValue = l_sensor3_value;
-						prepare_json_data(g_sensor3,l_sensor3_value);
+						prepare_json_data(g_sensor1,l_sensor1_value,g_sensor2,l_sensor2_value,g_sensor3,l_sensor3_value);
 						pubnub_publishStatus(g_jsonResponse);
 						memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
-					}
-  				free(l_arr);
+				  	}  						
+	  				free(l_arr);
 				}
 			}
         	usleep(500000);

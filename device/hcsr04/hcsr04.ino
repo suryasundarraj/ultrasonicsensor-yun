@@ -70,6 +70,9 @@ void loop(void) {
   l_duration3 = pulseIn(g_echoPin3, HIGH);
   l_distance3 = (l_duration3/2) / 29.1;
   delay(300);
+  l_distance = map(l_distance,0,500,5,300);
+  l_distance2 = map(l_distance2,0,500,5,300);
+  l_distance3 = map(l_distance3,0,500,5,300);
   String l_sensorStatus;
   l_sensorStatus += "{\"device1\":\"";
   l_sensorStatus += String(l_distance);
